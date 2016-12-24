@@ -1,5 +1,5 @@
 from . import auth
-from flask import request, render_template, redirect, flash, url_for
+from flask import request, render_template, redirect, flash, url_for,current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from .forms import LoginForm, RegistrationForm, ChangePasswordForm, PasswordResetRequestForm, \
     PasswordRestForm, ChangeEmailForm
@@ -30,9 +30,10 @@ def logout():
 def register():
     form = RegistrationForm()
     if form.validate_on_submit():
+        print(current_app.config['FLASKY_ADMIN'])
         user = User(email=form.email.data,
                     username=form.username.data,
-                    password=form.passord.data)
+                    password=form.password.data)
         db.session.add(user)
         db.session.commit()
         token = user.generate_confirmation_token()
@@ -116,13 +117,13 @@ def password_reset(token):
         user = User.query.filter_by(email=form.email.data).first()
         if user is None:
             flash("请输入正确的邮件地址!")
-            return redirect(url_for('main.index'))
+            return redirect(url_for('auth.login'))
         if user.reset_password(token, form.passowrd.data):
             flash("密码重置成功")
             return redirect(url_for('auth.login'))
         else:
             flash("请输入正确的邮件地址!")
-            return redirect(url_for('main.index'))
+            return redirect(url_for('auth.password_reset', token=token))
     return render_template('auth/reset_password.html', form=form)
 
 
@@ -150,7 +151,6 @@ def change_email(token):
     else:
         flash("邮箱更改失败")
     return redirect(url_for("main.index"))
-
 
 
 
