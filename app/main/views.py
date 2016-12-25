@@ -1,14 +1,21 @@
 from . import main
 from flask import request, render_template, abort, flash, url_for,redirect
 from flask_login import current_user, login_required
-from ..models import User, Role
-from .forms import EditProfileForm, EditProfileAdminForm
+from ..models import User, Role, Post, Permission
+from .forms import EditProfileForm, EditProfileAdminForm, PostForm
 from .. import db
 from ..decorators import admin_required
 
 @main.route('/', methods=["GET", "POST"])
 def index():
-    return render_template('index.html')
+    form = PostForm()
+    if current_user.can(Permission.WRITE_ARTICLES) and form.validate_on_submit():
+        post = Post(body=form.body.data,
+                    author=current_user._get_current_object())
+        db.session.add(post)
+        return redirect(url_for('main.index'))
+    posts = Post.query.order_by(Post.timestamp.desc()).all()
+    return render_template('index.html', posts=posts, form=form)
 
 @main.route('/user/<username>')
 def user(username):

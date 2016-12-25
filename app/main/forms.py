@@ -38,7 +38,9 @@ class EditProfileAdminForm(FlaskForm):
             raise ValidationError("用户名已经被占用!")
 
 
-
+class PostForm(FlaskForm):
+    body = TextAreaField("有什么新鲜事想告诉大家?", validators=[DataRequired()])
+    submit = SubmitField("发布")
 
 
 
