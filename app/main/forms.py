@@ -2,6 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, TextAreaField, BooleanField, SelectField
 from wtforms.validators import ValidationError, Length, DataRequired, Email
 from ..models import Role, User
+from flask_pagedown.fields import PageDownField
 
 class EditProfileForm(FlaskForm):
     name = StringField('姓名', validators=[Length(0, 64)])
@@ -39,7 +40,7 @@ class EditProfileAdminForm(FlaskForm):
 
 
 class PostForm(FlaskForm):
-    body = TextAreaField("有什么新鲜事想告诉大家?", validators=[DataRequired()])
+    body = PageDownField("有什么新鲜事想告诉大家?", validators=[DataRequired()])
     submit = SubmitField("发布")
 
 

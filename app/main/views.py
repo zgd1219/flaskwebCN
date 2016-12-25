@@ -1,5 +1,5 @@
 from . import main
-from flask import request, render_template, abort, flash, url_for,redirect
+from flask import request, render_template, abort, flash, url_for,redirect, current_app
 from flask_login import current_user, login_required
 from ..models import User, Role, Post, Permission
 from .forms import EditProfileForm, EditProfileAdminForm, PostForm
@@ -14,13 +14,24 @@ def index():
                     author=current_user._get_current_object())
         db.session.add(post)
         return redirect(url_for('main.index'))
-    posts = Post.query.order_by(Post.timestamp.desc()).all()
-    return render_template('index.html', posts=posts, form=form)
+    page = request.args.get('page', 1, type=int)
+    pagination = Post.query.order_by(Post.timestamp.desc()).paginate(
+                page=page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
+                error_out=False)
+    posts = pagination.items
+    return render_template('index.html', posts=posts, form=form, pagination=pagination)
 
 @main.route('/user/<username>')
 def user(username):
-    user = User.query.filter_by(username=username).first_or_404()
-    return render_template("user.html", user=user)
+    user = User.query.filter_by(username=username).first()
+    if user is None:
+        abort(404)
+    page = request.args.get('page', 1, type=int)
+    pagination = Post.query.order_by(Post.timestamp.desc()).paginate(
+                page=page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
+                error_out=False )
+    posts = pagination.items
+    return render_template("user.html", user=user, posts=posts, pagination=pagination)
 
 @main.route('/edit-profile', methods=['GET', 'POST'])
 @login_required

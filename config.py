@@ -8,6 +8,7 @@ class Config:
     FLASKY_MAIL_SUBJECT_PREFIX = '微博客--'
     FLASKY_MAIL_SENDER = 'anotherzgd@sina.cn'
     FLASKY_ADMIN = os.environ.get('FLASKY_ADMIN')
+    FLASKY_POSTS_PER_PAGE = 20
 
 
     @staticmethod
