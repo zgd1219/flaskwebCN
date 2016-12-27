@@ -4,7 +4,7 @@ from flask_login import current_user, login_required
 from ..models import User, Role, Post, Permission
 from .forms import EditProfileForm, EditProfileAdminForm, PostForm
 from .. import db
-from ..decorators import admin_required
+from ..decorators import admin_required,permission_required
 
 @main.route('/', methods=["GET", "POST"])
 def index():
@@ -95,3 +95,41 @@ def edit(id):
         return redirect(url_for("main.post", id=post.id))
     form.body.data=post.body
     return render_template("edit_post.html", form=form)
+
+@main.route('/follow/<username>')
+@login_required
+@permission_required(Permission.FOLLOW)
+def follow(username):
+    user = User.query.filter_by(username=username).first()
+    if user is None:
+        flash("用户不存在!")
+        return redirect(url_for(".index"))
+    if current_user.is_following(user):
+        flash("已经关注了该用户!")
+        return redirect(url_for(".user", username=user.username))
+    current_user.follow(user)
+    flash("你成功关注了%s!" %user.username)
+    return redirect(url_for(".user", username=username))
+
+@main.route("/follow/<username>")
+@login_required
+@permission_required(Permission.FOLLOW)
+def unfollow(username):
+    user = User.query.filter_by(username=username).first()
+    if user is None:
+        flash("该用户不存在!")
+        return redirect(url_for(".index"))
+    if not current_user.is_following(user):
+        flash("你没有关注此用户!")
+        return redirect(url_for(".user", username=username))
+    current_user.unfollow(user)
+    flash("你取消了对%s的关注!" %username)
+    return redirect(url_for(".user", username=username))
+
+@main.route("/followers/<username>")
+def followers(username):
+    return render_template("followers.html")
+
+@main.route("/followed-by/<username>")
+def followed_by(username):
+    return render_template("followers.html")
