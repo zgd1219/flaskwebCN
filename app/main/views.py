@@ -1,8 +1,8 @@
 from . import main
 from flask import request, render_template, abort, flash, url_for,redirect, current_app,make_response
 from flask_login import current_user, login_required
-from ..models import User, Role, Post, Permission
-from .forms import EditProfileForm, EditProfileAdminForm, PostForm
+from ..models import User, Role, Post, Permission, Comment
+from .forms import EditProfileForm, EditProfileAdminForm, PostForm, CommentForm
 from .. import db
 from ..decorators import admin_required,permission_required
 
@@ -35,7 +35,7 @@ def user(username):
     if user is None:
         abort(404)
     page = request.args.get('page', 1, type=int)
-    pagination = Post.query.order_by(Post.timestamp.desc()).paginate(
+    pagination = user.posts.order_by(Post.timestamp.desc()).paginate(
                 page=page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
                 error_out=False )
     posts = pagination.items
@@ -83,10 +83,27 @@ def edit_profile_admin(id):
     form.about_me.data = user.about_me
     return render_template("edit_profile.html", form=form, user=user)
 
-@main.route('/post/<int:id>')
+@main.route('/post/<int:id>', methods=['GET', 'POST'])
 def post(id):
     post = Post.query.get_or_404(id)
-    return render_template('post.html', posts=[post])
+    form = CommentForm()
+    if form.validate_on_submit():
+        comment = Comment(body=form.body.data, post=post,
+                          author=current_user._get_current_object())
+        db.session.add(comment)
+        flash("评论成功!")
+        return redirect(url_for('.post', id=id, page= -1))
+    page = request.args.get('page', 1, type=int)
+    if page == -1:
+        page = (post.comments.count() -1) // \
+            current_app.config['FLASKY_COMMENTS_PER_PAGE'] + 1
+        print(page)
+    pagination = post.comments.order_by(Comment.timestamp.asc()).paginate(page,
+                    per_page=current_app.config['FLASKY_COMMENTS_PER_PAGE'],
+                    error_out=False)
+    comments = pagination.items
+    return render_template('post.html', posts=[post], pagination=pagination,
+                           comments=comments, form=form)
 
 @main.route('/edit/<int:id>', methods=['GET', 'POST'])
 @login_required

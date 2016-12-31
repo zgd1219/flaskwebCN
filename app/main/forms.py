@@ -44,4 +44,8 @@ class PostForm(FlaskForm):
     submit = SubmitField("发布")
 
 
+class CommentForm(FlaskForm):
+    body = PageDownField("", validators=[DataRequired()])
+    submit = SubmitField("评论")
+
 
