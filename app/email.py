@@ -6,7 +6,7 @@ from threading import Thread
 
 # set FLASKY_ADMIN=anotherzgd@sina.cn
 # set MAIL_USERNAME=anotherzgd@sina.cn
-# set MAIL_PASSWORD=zgd1219
+# set MAIL_PASSWORD=
 
 def send_async_email(app, msg):
     with app.app_context():
